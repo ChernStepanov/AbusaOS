@@ -9,7 +9,7 @@ namespace AbusaOS.Controls
     internal class InputField : Control
     {
         public string Value;
-        public int x, y, width, padding;
+        public int width, padding;
         VBECanvas canv;
         Font font;
         int _pX, _pY;
@@ -24,7 +24,7 @@ namespace AbusaOS.Controls
             this.x = x;
             this.y = y;
             this.width = width;
-            canv = Kernel.canv;
+            canv = Api.Canvas;
             this.font = font;
             this.padding = padding;
         }
@@ -64,7 +64,7 @@ namespace AbusaOS.Controls
             {
                 if (KeyboardManager.TryReadKey(out KeyEvent key))
                 {
-                    if (Kernel.TryHandleGlobalKey(key))
+                    if (Api.Input.TryHandleGlobalKey(key))
                     {
                         return;
                     }

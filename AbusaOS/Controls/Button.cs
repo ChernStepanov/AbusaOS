@@ -9,7 +9,7 @@ namespace AbusaOS.Controls
     public class Button : Control
     {
         public string Text { get; set; }
-        public Color color, textColor = Kernel.textColDark;
+        public Color color, textColor;
         public Font font;
         public int padding;
         public bool clicked, clickedOnce, hovered;
@@ -23,9 +23,7 @@ namespace AbusaOS.Controls
         int fixedWidth = -1;
         bool usingFixedWidth;
 
-        // Добавлены свойства Tag и Click
         public event EventHandler Click;
-        public object Tag { get; set; }
 
         public Button(string text, int x, int y, Color color, Font font, int padding = 5, Bitmap image = null, int fixedWidth = -1)
         {
@@ -35,7 +33,8 @@ namespace AbusaOS.Controls
             this.color = color;
             this.font = font;
             this.padding = padding;
-            canv = Kernel.canv;
+            textColor = Api.TextColorDark;
+            canv = Api.Canvas;
             this.image = image;
 
             usingFixedWidth = fixedWidth != -1;

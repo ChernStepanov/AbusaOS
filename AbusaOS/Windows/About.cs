@@ -1,4 +1,5 @@
-﻿using AbusaOS.Controls;
+using AbusaOS.Controls;
+using AbusaOS.ModuleSystem;
 using Cosmos.System.Graphics;
 using IL2CPU.API.Attribs;
 
@@ -12,15 +13,21 @@ namespace AbusaOS.Windows
 
         Label creds, creds1, creds2, creds3;
         ImageView logoView;
-        public About() : base(300, 300, 500, 170, "System info", Kernel.defFont)
+        readonly IKernelApi api;
+
+        public About() : this(new KernelApi())
         {
+        }
+
+        public About(IKernelApi api) : base(300, 300, 500, 170, "System info", api.DefaultFont)
+        {
+            this.api = api;
             logo = Kernel.logo;
             logoImg = new Bitmap(logotext);
-            creds = new("Created by", 20, 60, font, Kernel.textColDark);
-            creds1 = new("Abusa Development Group LLC", 40, 80, font, Kernel.textColDark);
-            creds2 = new("OS creator: CHERN STEPANOV", 20, 100, font, Kernel.textColDark);
-            creds2 = new("Credits: Iceik _Kot (Design)", 20, 100, font, Kernel.textColDark);
-            creds3 = new($"Version {Kernel.version}", 20, 130, font, Kernel.textColDark);
+            creds = new("Created by", 20, 60, font, api.TextColorDark);
+            creds1 = new("Abusa Development Group LLC", 40, 80, font, api.TextColorDark);
+            creds2 = new("Credits: Iceik _Kot (Design)", 20, 100, font, api.TextColorDark);
+            creds3 = new($"Version {Kernel.version}", 20, 130, font, api.TextColorDark);
             logoView = new(logoImg, 20, 10);
             controls.Add(creds);
             controls.Add(creds1);

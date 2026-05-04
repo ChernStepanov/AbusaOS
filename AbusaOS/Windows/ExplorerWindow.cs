@@ -1,4 +1,5 @@
 ﻿using AbusaOS.Controls;
+using AbusaOS.ModuleSystem;
 using Cosmos.System.Graphics;
 using IL2CPU.API.Attribs;
 using System;
@@ -10,6 +11,8 @@ namespace AbusaOS.Windows
 {
     internal class Explorer : Window
     {
+        private readonly IKernelApi api;
+
         [ManifestResourceStream(ResourceName = "AbusaOS.Resource.folder.bmp")]
         static byte[] folderIcon;
         [ManifestResourceStream(ResourceName = "AbusaOS.Resource.file.bmp")]
@@ -33,8 +36,13 @@ namespace AbusaOS.Windows
         private Button fileScrollDown;
         private Button backButton;
 
-        public Explorer() : base(100, 100, 600, 500, "Explorer", Kernel.defFont)
+        public Explorer() : this(new KernelApi())
         {
+        }
+
+        public Explorer(IKernelApi api) : base(100, 100, 600, 500, "Explorer", api.DefaultFont)
+        {
+            this.api = api;
             try
             {
                 folderImg = new Bitmap(folderIcon);
@@ -44,7 +52,7 @@ namespace AbusaOS.Windows
             }
             catch (Exception ex)
             {
-                Kernel.ShowMessage($"Initialization error: {ex.Message}", "Explorer", MsgType.Error);
+                api.ShowMessage($"Initialization error: {ex.Message}", "Explorer", MsgType.Error);
             }
         }
 
@@ -54,7 +62,7 @@ namespace AbusaOS.Windows
             {
                 if (!Directory.Exists(path))
                 {
-                    Kernel.ShowMessage($"Path not found: {path}", "Explorer", MsgType.Error);
+                    api.ShowMessage($"Path not found: {path}", "Explorer", MsgType.Error);
                     return;
                 }
 
@@ -65,7 +73,7 @@ namespace AbusaOS.Windows
             }
             catch (Exception ex)
             {
-                Kernel.ShowMessage($"Error updating folder content: {ex.Message}", "Explorer", MsgType.Error);
+                api.ShowMessage($"Error updating folder content: {ex.Message}", "Explorer", MsgType.Error);
             }
         }
 
@@ -96,7 +104,7 @@ namespace AbusaOS.Windows
                 {
                     displayedPath = displayedPath.Substring(0, 97) + "...";
                 }
-                Label statusBar = new Label(displayedPath, 20, 450, font, Kernel.textColDark);
+                Label statusBar = new Label(displayedPath, 20, 450, font, api.TextColorDark);
                 controls.Add(statusBar);
 
                 for (int i = folderScrollOffset; i < Math.Min(cachedDirs.Length, folderScrollOffset + maxItemsToShow); i++)
@@ -136,7 +144,7 @@ namespace AbusaOS.Windows
             }
             catch (Exception ex)
             {
-                Kernel.ShowMessage($"Error updating displayed items: {ex.Message}", "Explorer", MsgType.Error);
+                api.ShowMessage($"Error updating displayed items: {ex.Message}", "Explorer", MsgType.Error);
             }
         }
         public override void Update(VBECanvas canv, int mX, int mY, bool mD, int dmX, int dmY)
@@ -194,7 +202,7 @@ namespace AbusaOS.Windows
             }
             catch (Exception ex)
             {
-                Kernel.ShowMessage($"Update error: {ex.Message}", "Explorer", MsgType.Error);
+                api.ShowMessage($"Update error: {ex.Message}", "Explorer", MsgType.Error);
             }
         }
     }

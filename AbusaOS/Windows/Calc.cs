@@ -1,4 +1,5 @@
 ﻿using AbusaOS.Controls;
+using AbusaOS.ModuleSystem;
 using AbusaOS.Utils;
 using Cosmos.System.Graphics;
 using IL2CPU.API.Attribs;
@@ -10,6 +11,8 @@ namespace AbusaOS.Windows
 {
     internal class Calc : Window
     {
+        private readonly IKernelApi api;
+
         public List<List<Button>> buttons = new();
 
         public List<Button> additionalButtons = new();
@@ -24,8 +27,14 @@ namespace AbusaOS.Windows
         readonly static byte[] logoBytes;
 
 
-        public Calc() : base(100, 100, 240, 270, "Calculator", Kernel.defFont)
+        public Calc() : this(new KernelApi())
         {
+        }
+
+        public Calc(IKernelApi api) : base(100, 100, 240, 270, "Calculator", api.DefaultFont)
+        {
+            this.api = api;
+            expression = "";
             logo = new Bitmap(logoBytes);
             int e = 1;
             for (int i = 0; i < 3; i++)
@@ -33,32 +42,32 @@ namespace AbusaOS.Windows
                 List<Button> cur = new();
                 for (int j = 0; j < 3; j++)
                 {
-                    Button nw = new(e.ToString(), 20 + j * 50, 50 + i * 50, Kernel.mainCol, Kernel.defFont, 15);
+                    Button nw = new(e.ToString(), 20 + j * 50, 50 + i * 50, api.MainColor, api.DefaultFont, 15);
                     controls.Add(nw);
                     cur.Add(nw);
                     e++;
                 }
                 buttons.Add(cur);
             }
-            Button zeroButton = new("0", 70, 200, Kernel.mainCol, Kernel.defFont, 15);
+            Button zeroButton = new("0", 70, 200, api.MainColor, api.DefaultFont, 15);
             controls.Add(zeroButton);
             List<Button> last = new()
             {
               zeroButton
             };
             buttons.Add(last);
-            plusButton = new Button("+", 170, 50, Kernel.mainCol, Kernel.defFont, 15);
-            minusButton = new Button("-", 170, 100, Kernel.mainCol, Kernel.defFont, 15);
-            mulButton = new Button("*", 170, 150, Kernel.mainCol, Kernel.defFont, 15);
-            divButton = new Button("/", 170, 200, Kernel.mainCol, Kernel.defFont, 15);
-            expandButton = new Button(">", 190, 20, Kernel.mainCol, Kernel.defFont, 5);
-            eqButton = new Button("=", 120, 200, Kernel.mainCol, Kernel.defFont, 15);
-            cButton = new Button("C", 20, 200, Kernel.mainCol, Kernel.defFont, 15);
-            result = new Label("", 20, 20, Kernel.defFont, Kernel.textColDark);
-            sqrtButton = new Button("sqrt", 220, 50, Kernel.mainCol, Kernel.defFont, 15, null, 50);
-            lParenButton = new Button("(", 220, 100, Kernel.mainCol, Kernel.defFont, 15, null, 50);
-            rParenButton = new Button(")", 220, 150, Kernel.mainCol, Kernel.defFont, 15, null, 50);
-            dotButton = new Button(".", 220, 200, Kernel.mainCol, Kernel.defFont, 15, null, 50);
+            plusButton = new Button("+", 170, 50, api.MainColor, api.DefaultFont, 15);
+            minusButton = new Button("-", 170, 100, api.MainColor, api.DefaultFont, 15);
+            mulButton = new Button("*", 170, 150, api.MainColor, api.DefaultFont, 15);
+            divButton = new Button("/", 170, 200, api.MainColor, api.DefaultFont, 15);
+            expandButton = new Button(">", 190, 20, api.MainColor, api.DefaultFont, 5);
+            eqButton = new Button("=", 120, 200, api.MainColor, api.DefaultFont, 15);
+            cButton = new Button("C", 20, 200, api.MainColor, api.DefaultFont, 15);
+            result = new Label("", 20, 20, api.DefaultFont, api.TextColorDark);
+            sqrtButton = new Button("sqrt", 220, 50, api.MainColor, api.DefaultFont, 15, null, 50);
+            lParenButton = new Button("(", 220, 100, api.MainColor, api.DefaultFont, 15, null, 50);
+            rParenButton = new Button(")", 220, 150, api.MainColor, api.DefaultFont, 15, null, 50);
+            dotButton = new Button(".", 220, 200, api.MainColor, api.DefaultFont, 15, null, 50);
 
             controls.AddRange(new Control[]
             {
@@ -84,6 +93,32 @@ namespace AbusaOS.Windows
                 b.Visible = false;
             }
         }
+
+        private void AppendOperator(char op)
+        {
+            if (expression.Length == 0)
+            {
+                if (op == '-')
+                {
+                    expression = "-";
+                }
+                return;
+            }
+
+            if (expression[^1] == op)
+            {
+                return;
+            }
+
+            if (ExpressionParser.IsOperator(expression[^1]))
+            {
+                expression = expression[..^1] + op;
+                return;
+            }
+
+            expression += op;
+        }
+
         public override void Update(VBECanvas canv, int mX, int mY, bool mD, int dmX, int dmY)
         {
             try
@@ -136,7 +171,7 @@ namespace AbusaOS.Windows
                     double sqrt = Math.Sqrt(Convert.ToDouble(expression));
                     if (double.IsNaN(sqrt))
                     {
-                        Kernel.ShowMessage("Don't try doing this, you might break something...", "Real Numbers", MsgType.Info);
+                        api.ShowMessage("Don't try doing this, you might break something...", "Real Numbers", MsgType.Info);
                         expression = expression_old;
                     }
                     else
@@ -152,78 +187,28 @@ namespace AbusaOS.Windows
 
                 if (plusButton.clickedOnce)
                 {
-                    if (!expression.EndsWith("+"))
-                    {
-                        if (ExpressionParser.IsOperator(expression[^1]))
-                        {
-                            expression = expression[..^1] + "+";
-                        }
-                        else
-                        {
-                            expression += '+';
-                        }
-                    }
+                    AppendOperator('+');
 
                 }
 
                 if (minusButton.clickedOnce)
                 {
-                    if (!expression.EndsWith("-"))
-                    {
-                        if (ExpressionParser.IsOperator(expression[^1]))
-                        {
-                            expression = expression[..^1] + "-";
-                        }
-                        else
-                        {
-                            expression += '-';
-                        }
-                    }
+                    AppendOperator('-');
                 }
 
                 if (dotButton.clickedOnce)
                 {
-                    if (!expression.EndsWith("."))
-                    {
-                        if (ExpressionParser.IsOperator(expression[^1]))
-                        {
-                            expression = expression[..^1] + ".";
-                        }
-                        else
-                        {
-                            expression += '.';
-                        }
-                    }
+                    AppendOperator('.');
                 }
 
                 if (mulButton.clickedOnce)
                 {
-                    if (!expression.EndsWith("*"))
-                    {
-                        if (ExpressionParser.IsOperator(expression[^1]))
-                        {
-                            expression = expression[..^1] + "*";
-                        }
-                        else
-                        {
-                            expression += '*';
-                        }
-                    }
+                    AppendOperator('*');
                 }
 
                 if (divButton.clickedOnce)
                 {
-                    if (!expression.EndsWith("/"))
-                    {
-                        if (ExpressionParser.IsOperator(expression[^1]))
-                        {
-                            expression = expression[..^1] + "/";
-                        }
-                        else
-                        {
-                            expression += '/';
-                        }
-                    }
+                    AppendOperator('/');
                 }
 
                 if (lParenButton.clickedOnce)
@@ -243,7 +228,7 @@ namespace AbusaOS.Windows
             }
             catch (Exception ex)
             {
-                Kernel.ShowMessage(ex.Message, "Calculator", MsgType.Error);
+                api.ShowMessage(ex.Message, "Calculator", MsgType.Error);
                 Close();
             }
         }

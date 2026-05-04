@@ -17,7 +17,7 @@ namespace AbusaOS.Controls
             this.y = y;
             this.font = font;
             this.color = color;
-            canv = Kernel.canv;
+            canv = Api.Canvas;
         }
 
         public override void Update(int pX, int pY)

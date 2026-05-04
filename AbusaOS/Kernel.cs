@@ -1,4 +1,5 @@
 using AbusaOS.Controls;
+using AbusaOS.ModuleSystem;
 using AbusaOS.Utils;
 using AbusaOS.Windows;
 using Cosmos.Core.Memory;
@@ -36,7 +37,8 @@ namespace AbusaOS
         public static Font defFont;
         public static List<Window> windows = new();
         static List<Window> pendingCloseWindows = new();
-        static List<Application> applications = new();
+        public static ModuleManager Modules { get; } = ModuleManager.Shared;
+        static IKernelApi kernelApi = new KernelApi();
         List<Button> applicationsButtons = new();
         Button mainButton;
         public static int activeIndex = -1;
@@ -87,7 +89,7 @@ namespace AbusaOS
                 applicationsButtons[i].Update(10, 40);
                 if (applicationsButtons[i].clickedOnce)
                 {
-                    Window instance = applications[i].constructor();
+                    Window instance = Modules.Applications[i].CreateWindow(kernelApi);
                     int mx = (int)MouseManager.X;
                     int my = (int)MouseManager.Y;
                     int dmx = MouseManager.DeltaX;
@@ -201,19 +203,6 @@ namespace AbusaOS
             }
         }
 
-        class Application
-        {
-            public Func<Window> constructor;
-            public Bitmap logo;
-            public string name;
-            public Application(Func<Window> constructor, string name, Bitmap logo)
-            {
-                this.constructor = constructor;
-                this.name = name;
-                this.logo = logo;
-            }
-        }
-
         public static void FatalErrorInternal(Exception e)
         {
             canv.Clear(Color.DarkSlateBlue);
@@ -276,17 +265,11 @@ namespace AbusaOS
 
                 mainButton = new Button("Main menu", 0, 0, mainCol, defFont, 7, logo);
 
-                applications.Add(new Application(() => new Calc(), "Calculator", new Calc().logo));
-                applications.Add(new Application(() => new Terminal(), "Terminal", new Terminal().logo));
-                applications.Add(new Application(() => new TestWindow(), "Test Window", new TestWindow().logo));
-                applications.Add(new Application(() => new UITest(), "Input Field Test", new UITest().logo));
-                applications.Add(new Application(() => new About(), "About Abusa OS...", new About().logo));
-                applications.Add(new Application(() => new Windows.Power(), "Power...", new Windows.Power().logo));
-                applications.Add(new Application(() => new Explorer(), "Explorer", new Explorer().logo));
+                Modules.EnsureInitialized(kernelApi);
 
-                for (int i = 0; i < applications.Count; i++)
+                for (int i = 0; i < Modules.Applications.Count; i++)
                 {
-                    applicationsButtons.Add(new Button(applications[i].name, 30, 40 + i * 50, mainCol, defFont, 10, applications[i].logo, 240));
+                    applicationsButtons.Add(new Button(Modules.Applications[i].Name, 30, 40 + i * 50, mainCol, defFont, 10, Modules.Applications[i].Icon, 240));
                 }
 
                 try
