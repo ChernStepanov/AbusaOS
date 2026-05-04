@@ -1,8 +1,45 @@
-﻿################################################################################
-# Данный GITIGNORE-файл был автоматически создан Microsoft(R) Visual Studio.
-################################################################################
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
 
-/.vs/Abusa-OS/DesignTimeBuild
-/.vs/Abusa-OS/FileContentIndex
-/.vs/Abusa-OS/FileContentIndex
-/.vs
+# JetBrains / VS Code
+.idea/
+.vscode/
+
+# Build outputs
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+out/
+
+# Cosmos / generated artifacts
+*.iso
+*.bin
+*.obj
+*.cdb
+*.asm
+*.pdb
+*.log
+*.log.html
+XSharp.Assembler.log
+
+# NuGet
+packages/
+*.nupkg
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# OS / editor junk
+Thumbs.db
+Desktop.ini
+*.tmp
+*.temp
+*.bak
+
