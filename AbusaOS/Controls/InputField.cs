@@ -43,6 +43,7 @@ namespace AbusaOS.Controls
         public override void Update(int pX, int pY)
         {
             if (!Visible) return;
+            Value ??= "";
             if (submittedOnce) submittedOnce = false;
             _pX = pX;
             _pY = pY;
@@ -63,16 +64,24 @@ namespace AbusaOS.Controls
             {
                 if (KeyboardManager.TryReadKey(out KeyEvent key))
                 {
+                    if (Kernel.TryHandleGlobalKey(key))
+                    {
+                        return;
+                    }
+
                     if (key.Key == ConsoleKeyEx.Backspace)
                     {
-                        Value = Value.Remove(Value.Length - 1);
+                        if (Value.Length > 0)
+                        {
+                            Value = Value.Remove(Value.Length - 1);
+                        }
                     }
                     else if (key.Key == ConsoleKeyEx.Enter)
                     {
                         focused = false;
                         submittedOnce = true;
                     }
-                    else
+                    else if (key.KeyChar >= ' ')
                     {
                         Value += key.KeyChar;
                     }

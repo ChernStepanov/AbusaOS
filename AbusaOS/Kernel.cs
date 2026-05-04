@@ -1,4 +1,4 @@
-﻿using AbusaOS.Controls;
+using AbusaOS.Controls;
 using AbusaOS.Utils;
 using AbusaOS.Windows;
 using Cosmos.Core.Memory;
@@ -24,6 +24,8 @@ namespace AbusaOS
     {
         public CosmosVFS fs = new();
         public static string version = "v0.3.0";
+        const uint ScreenWidth = 1024;
+        const uint ScreenHeight = 768;
 
         public static Color bgCol = Color.FromArgb(31, 32, 33);
         public static Color mainCol = Color.FromArgb(57, 64, 69);
@@ -33,11 +35,18 @@ namespace AbusaOS
         public static VBECanvas canv;
         public static Font defFont;
         public static List<Window> windows = new();
+        static List<Window> pendingCloseWindows = new();
         static List<Application> applications = new();
         List<Button> applicationsButtons = new();
         Button mainButton;
         public static int activeIndex = -1;
         bool mainBar;
+        bool lastMouseDown;
+        int framesSinceGc;
+        string cachedTimeText = "";
+        int cachedTimeWidth;
+        static bool toggleMainMenuRequested;
+        static bool closeMainMenuRequested;
 
         [ManifestResourceStream(ResourceName = "AbusaOS.Resource.blue.bmp")]
         static byte[] bgBytes;
@@ -55,10 +64,17 @@ namespace AbusaOS
 
         void DrawTopbar()
         {
+            NormalizeActiveIndex();
             canv.DrawFilledRectangle(bgCol, 0, 0, (int)canv.Mode.Width, 30);
             mainButton.Update(0, 0);
             string time = DateTime.Now.ToString("dddd, MMM d, yyyy. HH:mm");
-            canv.DrawString(time, defFont, textColDark, (int)canv.Mode.Width - 20 - defFont.Width * time.Length, 10);
+            if (time != cachedTimeText)
+            {
+                cachedTimeText = time;
+                cachedTimeWidth = defFont.Width * cachedTimeText.Length;
+            }
+
+            canv.DrawString(cachedTimeText, defFont, textColDark, (int)canv.Mode.Width - 20 - cachedTimeWidth, 10);
             canv.DrawString(activeIndex != -1 && windows.Count != 0 && activeIndex < windows.Count ? windows[activeIndex].title : "", defFont, textColDark, 170, 8);
         }
 
@@ -77,18 +93,112 @@ namespace AbusaOS
                     int dmx = MouseManager.DeltaX;
                     int dmy = MouseManager.DeltaY;
                     instance.Start(canv, mx, my, MouseManager.MouseState == MouseState.Left, dmx, dmy);
-                    windows.Add(instance);
+                    OpenWindow(instance);
                     mainBar = false;
                     break;
                 }
             }
+        }
 
+        bool MouseInMainMenu(int mouseX, int mouseY)
+        {
+            return mainBar &&
+                mouseX >= 10 && mouseX <= 310 &&
+                mouseY >= 40 && mouseY <= 40 + applicationsButtons.Count * 50 + 40;
+        }
+
+        public static void CloseMainMenu()
+        {
+            closeMainMenuRequested = true;
+        }
+
+        static bool IsMetaKey(KeyEvent key)
+        {
+            string name = key.Key.ToString();
+            return name == "LWin" || name == "RWin" ||
+                name == "LeftWindows" || name == "RightWindows" ||
+                name == "LeftMeta" || name == "RightMeta" ||
+                name == "Super" || name == "Meta";
+        }
+
+        public static bool TryHandleGlobalKey(KeyEvent key)
+        {
+            if (!IsMetaKey(key))
+            {
+                return false;
+            }
+
+            toggleMainMenuRequested = true;
+            return true;
         }
 
         public static void ShowMessage(string content, string title = "Message", MsgType type = MsgType.Info)
         {
-            windows.Add(new MsgWindow(title, content, type));
+            OpenWindow(new MsgWindow(title, content, type));
+        }
+
+        public static void OpenWindow(Window window)
+        {
+            if (window == null)
+            {
+                return;
+            }
+
+            windows.Add(window);
             activeIndex = windows.Count - 1;
+            CloseMainMenu();
+        }
+
+        public static void RequestCloseWindow(Window window)
+        {
+            if (window != null && !pendingCloseWindows.Contains(window))
+            {
+                pendingCloseWindows.Add(window);
+            }
+        }
+
+        void ProcessWindowCloseRequests()
+        {
+            if (pendingCloseWindows.Count == 0)
+            {
+                NormalizeActiveIndex();
+                return;
+            }
+
+            for (int i = 0; i < pendingCloseWindows.Count; i++)
+            {
+                Window window = pendingCloseWindows[i];
+                int removedIndex = windows.IndexOf(window);
+                if (removedIndex == -1)
+                {
+                    continue;
+                }
+
+                windows.RemoveAt(removedIndex);
+                if (activeIndex == removedIndex)
+                {
+                    activeIndex = windows.Count > 0 ? windows.Count - 1 : -1;
+                }
+                else if (activeIndex > removedIndex)
+                {
+                    activeIndex--;
+                }
+            }
+
+            pendingCloseWindows.Clear();
+            NormalizeActiveIndex();
+        }
+
+        void NormalizeActiveIndex()
+        {
+            if (windows.Count == 0)
+            {
+                activeIndex = -1;
+            }
+            else if (activeIndex >= windows.Count)
+            {
+                activeIndex = windows.Count - 1;
+            }
         }
 
         class Application
@@ -147,7 +257,7 @@ namespace AbusaOS
             {
                 try { VFSManager.RegisterVFS(fs); } catch { }
 
-                canv = new VBECanvas();
+                canv = new VBECanvas(new Mode(ScreenWidth, ScreenHeight, ColorDepth.ColorDepth32));
 
                 bool throwTestError = false;
                 if (throwTestError) { throw new Exception("This is a test exception"); }
@@ -166,7 +276,6 @@ namespace AbusaOS
 
                 mainButton = new Button("Main menu", 0, 0, mainCol, defFont, 7, logo);
 
-
                 applications.Add(new Application(() => new Calc(), "Calculator", new Calc().logo));
                 applications.Add(new Application(() => new Terminal(), "Terminal", new Terminal().logo));
                 applications.Add(new Application(() => new TestWindow(), "Test Window", new TestWindow().logo));
@@ -174,7 +283,6 @@ namespace AbusaOS
                 applications.Add(new Application(() => new About(), "About Abusa OS...", new About().logo));
                 applications.Add(new Application(() => new Windows.Power(), "Power...", new Windows.Power().logo));
                 applications.Add(new Application(() => new Explorer(), "Explorer", new Explorer().logo));
-
 
                 for (int i = 0; i < applications.Count; i++)
                 {
@@ -204,7 +312,6 @@ namespace AbusaOS
             {
                 HandleUncaughtError(e);
             }
-
         }
 
         public void DrawCursor(uint x, uint y)
@@ -224,7 +331,6 @@ namespace AbusaOS
         {
             try
             {
-                canv.Clear();   
                 canv.DrawImage(bg, 0, 0);
                 DrawTopbar();
 
@@ -233,30 +339,75 @@ namespace AbusaOS
                     mainBar = !mainBar;
                 }
 
-                // Draw windows
+                int mouseX = (int)MouseManager.X;
+                int mouseY = (int)MouseManager.Y;
+                bool mouseDown = MouseManager.MouseState == MouseState.Left;
+                int deltaX = MouseManager.DeltaX;
+                int deltaY = MouseManager.DeltaY;
+
+                bool activeWindowConsumesKeyboard = activeIndex >= 0 &&
+                    activeIndex < windows.Count &&
+                    windows[activeIndex] is Terminal;
+
+                if (!activeWindowConsumesKeyboard &&
+                    KeyboardManager.TryReadKey(out KeyEvent key))
+                {
+                    TryHandleGlobalKey(key);
+                }
+
+                if (toggleMainMenuRequested)
+                {
+                    mainBar = !mainBar;
+                    toggleMainMenuRequested = false;
+                }
+
                 for (int i = 0; i < windows.Count; i++)
                 {
-                    // Draw all windows except the active one
                     if (i != activeIndex)
                     {
-                        windows[i].Update(canv, (int)MouseManager.X, (int)MouseManager.Y, MouseManager.MouseState == MouseState.Left, MouseManager.DeltaX, MouseManager.DeltaY); // Update inactive windows
+                        windows[i].Update(canv, mouseX, mouseY, mouseDown, deltaX, deltaY);
                     }
                 }
-                // Draw the active window last
+
+                ProcessWindowCloseRequests();
+
                 if (activeIndex != -1 && windows.Count > 0)
-                    windows[activeIndex].Update(canv, (int)MouseManager.X, (int)MouseManager.Y, MouseManager.MouseState == MouseState.Left, MouseManager.DeltaX, MouseManager.DeltaY);
+                {
+                    windows[activeIndex].Update(canv, mouseX, mouseY, mouseDown, deltaX, deltaY);
+                }
 
-                // Draw the main bar if it's visible
-                if (mainBar) DrawMainBar();
+                ProcessWindowCloseRequests();
 
-                // Draw the cursor
+                if (closeMainMenuRequested)
+                {
+                    mainBar = false;
+                    closeMainMenuRequested = false;
+                }
+
+                if (mainBar)
+                {
+                    DrawMainBar();
+                }
+
+                if (mouseDown && !lastMouseDown && mainBar &&
+                    !MouseInMainMenu(mouseX, mouseY) &&
+                    !mainButton.Hovered(mouseX, mouseY))
+                {
+                    mainBar = false;
+                    activeIndex = -1;
+                }
+
+                lastMouseDown = mouseDown;
+
                 DrawCursor(MouseManager.X, MouseManager.Y);
-
-                // Update the screen
                 canv.Display();
 
-                // Collect garbage
-                Heap.Collect();
+                framesSinceGc++;
+                if (framesSinceGc >= 120)
+                {
+                    Heap.Collect();
+                    framesSinceGc = 0;
+                }
             }
             catch (Exception e)
             {

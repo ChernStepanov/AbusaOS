@@ -1,4 +1,4 @@
-﻿using AbusaOS.Controls;
+using AbusaOS.Controls;
 using Cosmos.System.Graphics;
 using Cosmos.System.Graphics.Fonts;
 using IL2CPU.API.Attribs;
@@ -19,7 +19,7 @@ namespace AbusaOS.Windows
         bool lmD;
         public List<Control> controls = new();
         public bool resizable = false;
-        public bool windowed = true; // New property to control the presence of the maximize button
+        public bool windowed = true;
         public Button closeButton;
         public Button maximizeButton;
         protected int myIndex = -1;
@@ -56,9 +56,11 @@ namespace AbusaOS.Windows
 
         public void Close()
         {
-            if (Kernel.activeIndex == myIndex)
-                Kernel.activeIndex = -1;
-            Kernel.windows.Remove(this);
+            Kernel.RequestCloseWindow(this);
+        }
+
+        public void InvalidateCache()
+        {
         }
 
         void FixBounds()
@@ -82,9 +84,46 @@ namespace AbusaOS.Windows
                 }
             }
 
-            if (h <= MostBottomControl.y + margin)
+            if (MostBottomControl != null && h <= MostBottomControl.y + margin)
             {
                 h = MostBottomControl.y + margin;
+            }
+        }
+
+        void ClampToCanvas(VBECanvas canv)
+        {
+            int screenWidth = (int)canv.Mode.Width;
+            int screenHeight = (int)canv.Mode.Height;
+            int maxWindowWidth = screenWidth - 2;
+            int maxContentHeight = screenHeight - window_titlebarsize - 2;
+
+            if (w > maxWindowWidth)
+            {
+                w = maxWindowWidth;
+            }
+            if (h > maxContentHeight)
+            {
+                h = maxContentHeight;
+            }
+
+            if (x < 0)
+            {
+                x = 0;
+            }
+            if (y < 0)
+            {
+                y = 0;
+            }
+
+            int maxX = screenWidth - w - 2;
+            int maxY = screenHeight - h - window_titlebarsize - 2;
+            if (x > maxX)
+            {
+                x = maxX > 0 ? maxX : 0;
+            }
+            if (y > maxY)
+            {
+                y = maxY > 0 ? maxY : 0;
             }
         }
 
@@ -97,18 +136,33 @@ namespace AbusaOS.Windows
         {
             if (myIndex == -1)
                 myIndex = Kernel.windows.FindIndex(x => x == this);
+            else if (myIndex >= Kernel.windows.Count || Kernel.windows[myIndex] != this)
+                myIndex = Kernel.windows.FindIndex(x => x == this);
 
-            if (Clicked(mX, mY, mD && !lmD))
+            bool isActive = Kernel.activeIndex == myIndex && Kernel.activeIndex != -1;
+            ClampToCanvas(canv);
+
+            if (ContainsPoint(mX, mY) && mD && !lmD)
             {
                 if (Kernel.activeIndex != myIndex)
+                {
                     Kernel.activeIndex = myIndex;
+                    isActive = true;
+                }
+                Kernel.CloseMainMenu();
+            }
+
+            if (ClickedTitlebar(mX, mY, mD && !lmD))
+            {
                 dragging = true;
                 dragOffsetX = mX - x;
                 dragOffsetY = mY - y;
+                InvalidateCache();
             }
             if (ClickedResize(mX, mY, mD && !lmD) && resizable)
             {
                 resizing = true;
+                InvalidateCache();
             }
 
             closeButton.x = w - 40;
@@ -126,7 +180,6 @@ namespace AbusaOS.Windows
             {
                 if (maximized)
                 {
-                    // Restore previous size and position
                     x = previousBounds.X;
                     y = previousBounds.Y;
                     w = previousBounds.Width;
@@ -135,15 +188,14 @@ namespace AbusaOS.Windows
                 }
                 else
                 {
-                    // Save current size and position
                     previousBounds = new Rectangle(x, y, w, h);
-                    // Maximize the window
                     x = 0;
                     y = 0;
-                    w = (int)canv.Mode.Width;
-                    h = (int)canv.Mode.Height - window_titlebarsize;
+                    w = (int)canv.Mode.Width - 2;
+                    h = (int)canv.Mode.Height - window_titlebarsize - 2;
                     maximized = true;
                 }
+                InvalidateCache();
             }
 
             if (resizing)
@@ -152,6 +204,8 @@ namespace AbusaOS.Windows
                 h += dmY;
 
                 FixBounds();
+                ClampToCanvas(canv);
+                InvalidateCache();
 
                 if (!mD)
                 {
@@ -161,7 +215,7 @@ namespace AbusaOS.Windows
 
             canv.DrawFilledRectangle(Kernel.bgCol, x, y + window_titlebarsize, w, h);
 
-            if (Kernel.activeIndex == Kernel.windows.FindIndex(x => x == this) && Kernel.activeIndex != -1)
+            if (Kernel.activeIndex == myIndex && Kernel.activeIndex != -1)
             {
                 canv.DrawFilledRectangle(Kernel.highlightCol, x, y, w, window_titlebarsize);
                 canv.DrawRectangle(Kernel.highlightCol, x, y + window_titlebarsize, w, h);
@@ -176,34 +230,19 @@ namespace AbusaOS.Windows
             }
 
             canv.DrawRectangle(Color.Black, x, y, w, h + window_titlebarsize);
-
             canv.DrawImageAlpha(logo, x + 10, y + 5);
 
             if (dragging && Kernel.activeIndex == myIndex)
             {
                 x = mX - dragOffsetX;
                 y = mY - dragOffsetY;
-                if (y <= 0)
-                {
-                    y = 0;
-                }
-                if (x <= 0)
-                {
-                    x = 0;
-                }
-                if (x >= canv.Mode.Width - w)
-                {
-                    x = (int)canv.Mode.Width - w;
-                }
-                if (y >= canv.Mode.Height - h - window_titlebarsize)
-                {
-                    y = (int)canv.Mode.Height - h - window_titlebarsize;
-                }
+                ClampToCanvas(canv);
 
                 if (!mD)
                 {
                     dragging = false;
                 }
+                InvalidateCache();
             }
 
             if (resizable && !maximized)
@@ -222,7 +261,13 @@ namespace AbusaOS.Windows
             lmD = mD;
         }
 
-        public bool Clicked(int mX, int mY, bool mD)
+        public bool ContainsPoint(int mX, int mY)
+        {
+            return mX >= x && mX <= x + w &&
+                mY >= y && mY <= y + h + window_titlebarsize;
+        }
+
+        public bool ClickedTitlebar(int mX, int mY, bool mD)
         {
             if (mX >= x && mX <= x + w &&
                 mY >= y && mY <= y + window_titlebarsize)

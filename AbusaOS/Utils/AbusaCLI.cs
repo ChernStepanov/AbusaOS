@@ -1,4 +1,4 @@
-﻿using AbusaOS.Windows;
+using AbusaOS.Windows;
 using Cosmos.Core;
 using System;
 using System.Collections.Generic;
@@ -51,20 +51,14 @@ namespace AbusaOS.Utils
 
     public class CLICallPSOD : CLICommand
     {
-        public CLICallPSOD() : base("CallPSOD", "Calls the Purple Screen Of Death", new string[] { "CallPSOD" }) { }
+        public CLICallPSOD() : base("CallPSOD", "Calls the Purple Screen Of Death", new string[] { "callpsod" }) { }
 
         public override void Execute(List<string> args, Terminal instance)
         {
-            // Получаем строку из аргументов
-            string message = args.Count > 0 ? args[0] : "U ok? Nothing happened";
-
-            // Создаём исключение с этим сообщением
+            string message = args.Count > 1 ? string.Join(" ", args.Skip(1)) : "U ok? Nothing happened";
             Exception exception = new(message);
-
-            // Передаём исключение в Kernel.FatalErrorInternal
             Kernel.FatalErrorInternal(exception);
         }
-
     }
 
     public class CLIInfo : CLICommand
@@ -132,7 +126,7 @@ namespace AbusaOS.Utils
             foreach (string dir in dirs)
             {
                 instance.print_str($" {identstr} DIR   {dir}\n");
-                PrintRecursiveDirectory(Path.Combine(path, dir), ident + 1, instance);
+                PrintRecursiveDirectory(dir, ident + 1, instance);
             }
             instance.curcol = Color.White;
             string[] files = Directory.GetFiles(path);
@@ -176,13 +170,14 @@ namespace AbusaOS.Utils
         {
             if (args.Count != 2)
             {
-                instance.print_str("Usage: cd [dirpath]");
+                instance.print_str("Usage: cd [dirpath]\n");
                 return;
             }
 
             if (args[1] == "..")
             {
-                instance.pwd = Directory.GetParent(instance.pwd).FullName;
+                DirectoryInfo parent = Directory.GetParent(instance.pwd);
+                instance.pwd = parent != null ? parent.FullName : instance.pwd;
             }
             else if (args[1] == ".")
             {
@@ -199,6 +194,7 @@ namespace AbusaOS.Utils
                 {
                     instance.pwd = Path.Join(instance.pwd, args[1]);
                 }
+
                 if (!Directory.Exists(instance.pwd))
                 {
                     instance.curcol = Color.Red;
@@ -258,7 +254,6 @@ namespace AbusaOS.Utils
         }
     }
 
-
     public class CLICat : CLICommand
     {
         public CLICat() : base("Cat", "Read file", new string[] { "cat", "read" }) { }
@@ -266,10 +261,10 @@ namespace AbusaOS.Utils
         {
             if (args.Count != 2)
             {
-                instance.print_str("Usage: cat [dirpath]");
+                instance.print_str("Usage: cat [filepath]\n");
                 return;
             }
-            string fpath = "";
+            string fpath;
 
             if (Path.IsPathRooted(args[1]))
             {
@@ -289,41 +284,49 @@ namespace AbusaOS.Utils
             }
 
             string contents = File.ReadAllText(fpath);
-
             instance.print_str(contents);
+            if (!contents.EndsWith("\n"))
+            {
+                instance.print_str("\n");
+            }
         }
     }
 
     public class AbusaCLI
     {
         public static CLICommand[] Commands = {
-        new CLIClearScreen(),
-        new CLIInfo(),
-        new CLIEcho(),
-        new CLIDir(),
-        new CLICD(),
-        new CLICat(),
-        new CLIHelp(),
-        new CLICallPSOD()
-    };
+            new CLIClearScreen(),
+            new CLIInfo(),
+            new CLIEcho(),
+            new CLIDir(),
+            new CLICD(),
+            new CLICat(),
+            new CLIHelp(),
+            new CLICallPSOD()
+        };
 
         public static void ParseCommand(string command, Terminal instance)
         {
-            List<string> args = command.Split(' ').ToList();
-            args = args.Where(arg => !string.IsNullOrEmpty(arg)).ToList();
+            List<string> args = command.Split(' ').Where(arg => !string.IsNullOrEmpty(arg)).ToList();
+            if (args.Count == 0)
+            {
+                instance.print_str("\n");
+                return;
+            }
 
+            string commandName = args[0].ToLower();
             foreach (CLICommand cmd in Commands)
             {
-                if (cmd.Aliases.Any(alias => alias.ToLower() == args[0].ToLower()))
+                if (cmd.Aliases.Any(alias => alias.ToLower() == commandName))
                 {
                     cmd.Execute(args, instance);
                     return;
                 }
             }
+
             instance.curcol = Color.Red;
             instance.print_str($"[ERR] No such command {args[0]}\n");
             instance.curcol = Color.White;
         }
     }
-
 }

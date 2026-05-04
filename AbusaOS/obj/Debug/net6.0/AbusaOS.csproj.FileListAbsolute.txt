@@ -37,3 +37,16 @@ C:\Users\Home\PycharmProjects\AbusaOS\AbusaOS\obj\Debug\net6.0\refint\AbusaOS.dl
 C:\Users\Home\PycharmProjects\AbusaOS\AbusaOS\obj\Debug\net6.0\AbusaOS.pdb
 C:\Users\Home\PycharmProjects\AbusaOS\AbusaOS\obj\Debug\net6.0\ref\AbusaOS.dll
 C:\Users\штепашка\Desktop\AbusaOS\AbusaOS\obj\Debug\net6.0\AbusaOS.sourcelink.json
+C:\Users\2\Desktop\AbusaOS\AbusaOS\obj\Debug\net6.0\AbusaOS.dll
+C:\Users\2\Desktop\AbusaOS\AbusaOS\obj\Debug\net6.0\refint\AbusaOS.dll
+C:\Users\2\Desktop\AbusaOS\AbusaOS\obj\Debug\net6.0\AbusaOS.pdb
+C:\Users\2\Desktop\AbusaOS\AbusaOS\bin\Debug\net6.0\AbusaOS.deps.json
+C:\Users\2\Desktop\AbusaOS\AbusaOS\bin\Debug\net6.0\AbusaOS.dll
+C:\Users\2\Desktop\AbusaOS\AbusaOS\bin\Debug\net6.0\AbusaOS.pdb
+C:\Users\2\Desktop\AbusaOS\AbusaOS\obj\Debug\net6.0\AbusaOS.csproj.AssemblyReference.cache
+C:\Users\2\Desktop\AbusaOS\AbusaOS\obj\Debug\net6.0\AbusaOS.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\2\Desktop\AbusaOS\AbusaOS\obj\Debug\net6.0\AbusaOS.AssemblyInfoInputs.cache
+C:\Users\2\Desktop\AbusaOS\AbusaOS\obj\Debug\net6.0\AbusaOS.AssemblyInfo.cs
+C:\Users\2\Desktop\AbusaOS\AbusaOS\obj\Debug\net6.0\AbusaOS.csproj.CoreCompileInputs.cache
+C:\Users\2\Desktop\AbusaOS\AbusaOS\obj\Debug\net6.0\AbusaOS.sourcelink.json
+C:\Users\2\Desktop\AbusaOS\AbusaOS\obj\Debug\net6.0\ref\AbusaOS.dll

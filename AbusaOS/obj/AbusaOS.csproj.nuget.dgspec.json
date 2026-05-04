@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\штепашка\\Desktop\\AbusaOS\\AbusaOS\\AbusaOS.csproj": {}
+    "C:\\Users\\2\\Desktop\\AbusaOS\\AbusaOS\\AbusaOS.csproj": {}
   },
   "projects": {
-    "C:\\Users\\штепашка\\Desktop\\AbusaOS\\AbusaOS\\AbusaOS.csproj": {
+    "C:\\Users\\2\\Desktop\\AbusaOS\\AbusaOS\\AbusaOS.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\штепашка\\Desktop\\AbusaOS\\AbusaOS\\AbusaOS.csproj",
+        "projectUniqueName": "C:\\Users\\2\\Desktop\\AbusaOS\\AbusaOS\\AbusaOS.csproj",
         "projectName": "AbusaOS",
-        "projectPath": "C:\\Users\\штепашка\\Desktop\\AbusaOS\\AbusaOS\\AbusaOS.csproj",
-        "packagesPath": "C:\\Users\\штепашка\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\штепашка\\Desktop\\AbusaOS\\AbusaOS\\obj\\",
+        "projectPath": "C:\\Users\\2\\Desktop\\AbusaOS\\AbusaOS\\AbusaOS.csproj",
+        "packagesPath": "C:\\Users\\2\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\2\\Desktop\\AbusaOS\\AbusaOS\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\штепашка\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\2\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -22,7 +22,7 @@
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "C:\\Users\\штепашка\\AppData\\Roaming\\Cosmos User Kit\\packages\\": {},
+          "C:\\Users\\2\\AppData\\Roaming\\Cosmos User Kit\\packages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -40,7 +40,8 @@
           "enableAudit": "true",
           "auditLevel": "low",
           "auditMode": "direct"
-        }
+        },
+        "SdkAnalysisLevel": "9.0.300"
       },
       "frameworks": {
         "net6.0": {
@@ -99,7 +100,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.205\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.310\\RuntimeIdentifierGraph.json"
         }
       }
     }

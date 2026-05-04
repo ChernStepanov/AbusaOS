@@ -74,6 +74,11 @@ namespace AbusaOS.Windows
             try
             {
                 controls.RemoveAll(control => control is Button);
+                backButton = null;
+                folderScrollUp = null;
+                folderScrollDown = null;
+                fileScrollUp = null;
+                fileScrollDown = null;
 
                 if (path != @"0:\")
                 {
